@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
@@ -92,7 +93,7 @@ public class GameManager : MonoBehaviour
 
     private void LossGame()
     {
-        Debug.Log("Game Over");
+        SceneManager.LoadScene("Loss");
     }
 
     private void Update()

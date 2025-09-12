@@ -24,10 +24,12 @@ public class Health : MonoBehaviour
     {
         layout.enabled = false;
         health--;
-        healthContainers[health].SetActive(false);
+        
         if (health <= 0)
         {
             OnDeath?.Invoke();
+            health = 0;
         }
+        healthContainers[health].SetActive(false);
     }
 }
