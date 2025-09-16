@@ -18,19 +18,26 @@ public class GameManager : MonoBehaviour
     private Piece _currentPiece=new Piece();
     private float currentTimerDuration;
 
-    [SerializeField] Health health;
+    [SerializeField] private Health health;
     [SerializeField] private List<Piece> pieces;
     [SerializeField] private Image Form;
     [SerializeField] private Image Pattern;
     [SerializeField] private TextMeshProUGUI PromtText;
-    [SerializeField] MonoTimer timer;
-    [SerializeField] float StartingTime;
+    [SerializeField] private MonoTimer timer;
+    [SerializeField] private float StartingTime;
     [SerializeField] private PointSystem pointSystem;
     [SerializeField] private float minTimerDuration = 1f;
     [SerializeField] private float speedIncreaseOnWin = 0.2f;
     [SerializeField] private float speedDecreaseOnLose = 0.2f;
     [SerializeField] private float shakeDuration = 0.2f;
     [SerializeField] private float shakeIntensity = 10f;
+
+    [Header("Audio")]
+    [SerializeField] private AudioSource bgmSource;
+    [SerializeField] private float pitchIncreaseFactor = 1.2f;
+    [SerializeField] private float maxPitch = 3f;
+    [SerializeField] private AudioSource loseSfxSource;
+    [SerializeField] private AudioSource winSfxSource;
 
     private Vector2 originalFormPosition;
     private RectTransform formRectTransform;
@@ -52,6 +59,14 @@ public class GameManager : MonoBehaviour
         }
         timer.TimerFinished += Lose;
         health.OnDeath += LossGame;
+
+        if (bgmSource != null && !bgmSource.isPlaying)
+        {
+            bgmSource.pitch = 1f;
+            bgmSource.loop = true;
+            bgmSource.Play();
+        }
+
         NextRound();
     }
 
@@ -89,6 +104,7 @@ public class GameManager : MonoBehaviour
     private void Win()
     {
         pointSystem.Score();
+        winSfxSource.Play();
         currentTimerDuration = Mathf.Max(minTimerDuration, currentTimerDuration - speedIncreaseOnWin);
         NextRound();
     }
@@ -97,26 +113,30 @@ public class GameManager : MonoBehaviour
     {
         health.TakeDamage();
         pointSystem.Fail();
+        loseSfxSource.Play();
+        IncreaseBGMPitch();
         StartCoroutine(ShakeForm());
         currentTimerDuration = Mathf.Min(StartingTime, currentTimerDuration + speedDecreaseOnLose);
         NextRound();
     }
 
+    private void IncreaseBGMPitch()
+    {
+        if (bgmSource == null) return;
+        bgmSource.pitch = Mathf.Min(maxPitch, bgmSource.pitch * pitchIncreaseFactor);
+    }
+
     private IEnumerator ShakeForm()
     {
         float elapsed = 0f;
-
         while (elapsed < shakeDuration)
         {
             float x = Random.Range(-1f, 1f) * shakeIntensity;
             float y = Random.Range(-1f, 1f) * shakeIntensity;
-
             formRectTransform.anchoredPosition = originalFormPosition + new Vector2(x, y);
-
             elapsed += Time.deltaTime;
             yield return null;
         }
-
         formRectTransform.anchoredPosition = originalFormPosition;
     }
 
