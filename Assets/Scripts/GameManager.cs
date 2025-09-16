@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -12,11 +13,11 @@ public class GameManager : MonoBehaviour
     private List<Color> _colors=new List<Color>();
     private List<Sprite> _patterns=new List<Sprite>();
     private List<Promt> promts = new List<Promt>();
-    
+
     private Promt _currentPromt;
     private Piece _currentPiece=new Piece();
-    private float _time;
-    
+    private float currentTimerDuration;
+
     [SerializeField] Health health;
     [SerializeField] private List<Piece> pieces;
     [SerializeField] private Image Form;
@@ -24,14 +25,22 @@ public class GameManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI PromtText;
     [SerializeField] MonoTimer timer;
     [SerializeField] float StartingTime;
-    [SerializeField] float timeSubstraction;
     [SerializeField] private PointSystem pointSystem;
-    
-    
-    
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
+    [SerializeField] private float minTimerDuration = 1f;
+    [SerializeField] private float speedIncreaseOnWin = 0.2f;
+    [SerializeField] private float speedDecreaseOnLose = 0.2f;
+    [SerializeField] private float shakeDuration = 0.2f;
+    [SerializeField] private float shakeIntensity = 10f;
+
+    private Vector2 originalFormPosition;
+    private RectTransform formRectTransform;
+
     void Start()
     {
+        formRectTransform = Form.GetComponent<RectTransform>();
+        originalFormPosition = formRectTransform.anchoredPosition;
+        currentTimerDuration = StartingTime;
+
         promts.Add(new ColorPromt());
         promts.Add(new FormPromt());
         promts.Add(new PatternPromt());
@@ -43,17 +52,15 @@ public class GameManager : MonoBehaviour
         }
         timer.TimerFinished += Lose;
         health.OnDeath += LossGame;
-        _time = StartingTime;
         NextRound();
     }
 
     public void NextRound()
     {
-        _currentPromt=promts[Random.Range(0, promts.Count)];
-        PromtText.text="Follow The " + _currentPromt.ToString();
+        _currentPromt = promts[Random.Range(0, promts.Count)];
+        PromtText.text = "Follow The " + _currentPromt.ToString();
         NextPiece();
-        timer.StartTimer(_time);
-        _time-=timeSubstraction;
+        timer.StartTimer(currentTimerDuration);
     }
 
     [ContextMenu("Next Piece")]
@@ -82,13 +89,35 @@ public class GameManager : MonoBehaviour
     private void Win()
     {
         pointSystem.Score();
+        currentTimerDuration = Mathf.Max(minTimerDuration, currentTimerDuration - speedIncreaseOnWin);
         NextRound();
     }
+
     private void Lose()
     {
         health.TakeDamage();
         pointSystem.Fail();
+        StartCoroutine(ShakeForm());
+        currentTimerDuration = Mathf.Min(StartingTime, currentTimerDuration + speedDecreaseOnLose);
         NextRound();
+    }
+
+    private IEnumerator ShakeForm()
+    {
+        float elapsed = 0f;
+
+        while (elapsed < shakeDuration)
+        {
+            float x = Random.Range(-1f, 1f) * shakeIntensity;
+            float y = Random.Range(-1f, 1f) * shakeIntensity;
+
+            formRectTransform.anchoredPosition = originalFormPosition + new Vector2(x, y);
+
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        formRectTransform.anchoredPosition = originalFormPosition;
     }
 
     private void LossGame()
@@ -107,7 +136,6 @@ public class GameManager : MonoBehaviour
                 break;
             }
         }
-
     }
 }
 
