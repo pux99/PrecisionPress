@@ -6,8 +6,8 @@ public class ColorPromt : Promt
     {
         return "Color";
     }
-    public override bool Check(Piece currentPiece, Piece selected)
+    public override bool Check(EditablePieces currentPiece, Piece selected)
     {
-        return currentPiece.Color == selected.Color;
+        return currentPiece.Form.color == selected.Color;
     }
 }

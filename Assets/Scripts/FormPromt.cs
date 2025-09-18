@@ -6,8 +6,8 @@ public class FormPromt : Promt
     {
         return "form";
     }
-    public override bool Check(Piece currentPiece, Piece selected)
+    public override bool Check(EditablePieces currentPiece, Piece selected)
     {
-        return currentPiece.form == selected.form;
+        return currentPiece.Form.sprite == selected.form;
     }
 }

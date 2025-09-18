@@ -1,14 +1,13 @@
 using System;
-using Unity.VisualScripting;
-
+[Serializable]
 public class PatternPromt : Promt
 {
     public override string ToString()
     {
         return "pattern";
     }
-    public override bool Check(Piece currentPiece, Piece selected)
+    public override bool Check(EditablePieces currentPiece, Piece selected)
     {
-        return currentPiece.Pattern == selected.Pattern;
+        return currentPiece.Pattern.sprite == selected.Pattern;
     }
 }

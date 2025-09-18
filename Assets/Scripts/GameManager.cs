@@ -9,19 +9,20 @@ using Random = UnityEngine.Random;
 
 public class GameManager : MonoBehaviour
 {
-    private List<Sprite> _forms=new List<Sprite>();
-    private List<Color> _colors=new List<Color>();
-    private List<Sprite> _patterns=new List<Sprite>();
+    private List<Sprite> _forms = new List<Sprite>();
+    private List<Color> _colors = new List<Color>();
+    private List<Sprite> _patterns = new List<Sprite>();
     private List<Promt> promts = new List<Promt>();
 
+
     private Promt _currentPromt;
-    private Piece _currentPiece=new Piece();
+    private EditablePieces _currentPiece = new EditablePieces();
     private float currentTimerDuration;
 
     [SerializeField] private Health health;
     [SerializeField] private List<Piece> pieces;
-    [SerializeField] private Image Form;
-    [SerializeField] private Image Pattern;
+    [SerializeField] private List<EditablePieces> EditablePieces = new List<EditablePieces>();
+
     [SerializeField] private TextMeshProUGUI PromtText;
     [SerializeField] private MonoTimer timer;
     [SerializeField] private float StartingTime;
@@ -32,8 +33,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private float shakeDuration = 0.2f;
     [SerializeField] private float shakeIntensity = 10f;
 
-    [Header("Audio")]
-    [SerializeField] private AudioSource bgmSource;
+    [Header("Audio")] [SerializeField] private AudioSource bgmSource;
     [SerializeField] private float pitchIncreaseFactor = 1.2f;
     [SerializeField] private float maxPitch = 3f;
     [SerializeField] private AudioSource loseSfxSource;
@@ -44,7 +44,7 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
-        formRectTransform = Form.GetComponent<RectTransform>();
+        formRectTransform = EditablePieces[0].Form.GetComponent<RectTransform>();
         originalFormPosition = formRectTransform.anchoredPosition;
         currentTimerDuration = StartingTime;
 
@@ -57,6 +57,7 @@ public class GameManager : MonoBehaviour
             _colors.Add(piece.Color);
             _patterns.Add(piece.Pattern);
         }
+
         timer.TimerFinished += Lose;
         health.OnDeath += LossGame;
 
@@ -73,32 +74,67 @@ public class GameManager : MonoBehaviour
     public void NextRound()
     {
         _currentPromt = promts[Random.Range(0, promts.Count)];
-        PromtText.text = "Follow The " + _currentPromt.ToString();
+        SelectAEditablePiece();
+        PromtText.text = "Press " + _currentPiece.Name + " " + _currentPromt.ToString();
         NextPiece();
         timer.StartTimer(currentTimerDuration);
+    }
+
+    private void SelectAEditablePiece()
+    {
+        var chanceSum=0;
+        foreach (var piece in EditablePieces)
+        {
+            piece.ChanceToBeSelected.Sort((x, y) => x.Chance.CompareTo(y.Points));
+            var toSum=0;
+            foreach (var chance in piece.ChanceToBeSelected)
+                if (chance.Points <= pointSystem.scoreValue)
+                    toSum=chance.Chance;
+            chanceSum+=toSum;
+        }
+        
+        var random = Random.Range(1,chanceSum+1);
+        
+        foreach (var piece in EditablePieces)
+        {
+            var toRest=0;
+            foreach (var chance in piece.ChanceToBeSelected)
+                if (chance.Points <= pointSystem.scoreValue)
+                    toRest=chance.Chance;
+            random -= toRest;
+            if (random <= 0)
+            {
+                _currentPiece=piece;
+                break;
+            }
+        }
     }
 
     [ContextMenu("Next Piece")]
     public void NextPiece()
     {
-        _currentPiece.form = _forms[Random.Range(0, _forms.Count)];
-        _currentPiece.Color= _colors[Random.Range(0, _colors.Count)];
-        _currentPiece.Pattern = _patterns[Random.Range(0, _patterns.Count)];
-        Form.sprite = _currentPiece.form;
-        Form.color = _currentPiece.Color;
-        Pattern.sprite = _currentPiece.Pattern;
+        foreach (var piece in EditablePieces)
+        {
+            if (piece == _currentPiece) continue;
+            piece.Change(
+                _forms[Random.Range(0, _forms.Count)],
+                _colors[Random.Range(0, _colors.Count)],
+                _patterns[Random.Range(0, _patterns.Count)]);
+        }
+        _currentPiece.ForceChange(
+            _forms[Random.Range(0, _forms.Count)],
+            _colors[Random.Range(0, _colors.Count)],
+            _patterns[Random.Range(0, _patterns.Count)]);
     }
 
     public void CheckPromt(Piece selected)
     {
-        if (_currentPromt.Check(_currentPiece, selected))
-        {
-            Win();
-        }
-        else
+        if (!_currentPromt.Check(_currentPiece, selected))
         {
             Lose();
+            return;
         }
+        Win();
     }
 
     private void Win()
@@ -137,6 +173,7 @@ public class GameManager : MonoBehaviour
             elapsed += Time.deltaTime;
             yield return null;
         }
+
         formRectTransform.anchoredPosition = originalFormPosition;
     }
 
@@ -165,4 +202,46 @@ public class Piece
     public Sprite form;
     public Color Color;
     public Sprite Pattern;
+}
+
+[Serializable]
+public class EditablePieces
+{
+    public string Name;
+    public int ChangeFrequency;
+    private int _changeCounter;
+
+    public List<ChanceWhenPointsAreX> ChanceToBeSelected;
+    //public int ChanceToBeSelected;
+    public Image Form;
+    public Image Pattern;
+
+    public void Change(Sprite form, Color color, Sprite pattern)
+    {
+        _changeCounter++;
+        if (_changeCounter >= ChangeFrequency)
+        {
+            _changeCounter = 0;
+            Form.sprite = form;
+            Form.color = color;
+            Pattern.sprite = pattern;
+        }
+        
+    }
+
+    [Serializable]
+    public struct ChanceWhenPointsAreX
+    {
+        public int Points;
+        public int Chance;
+    }
+    public void ForceChange(Sprite form, Color color, Sprite pattern)
+    {
+        
+        _changeCounter = 0;
+        Form.sprite = form;
+        Form.color = color;
+        Pattern.sprite = pattern;
+        
+    }
 }
