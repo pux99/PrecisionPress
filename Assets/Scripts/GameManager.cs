@@ -215,6 +215,12 @@ public class EditablePieces
     //public int ChanceToBeSelected;
     public Image Form;
     public Image Pattern;
+    public bool IsTileable = false;
+    [Range(0.1f, 10f)]
+    public float FormTileScale = 1f;
+
+    private GameObject tilesContainer;
+    private List<GameObject> tileObjects = new List<GameObject>();
 
     public void Change(Sprite form, Color color, Sprite pattern)
     {
@@ -222,11 +228,21 @@ public class EditablePieces
         if (_changeCounter >= ChangeFrequency)
         {
             _changeCounter = 0;
-            Form.sprite = form;
-            Form.color = color;
-            Pattern.sprite = pattern;
+            
+            if (IsTileable)
+            {
+                CreateTiledPiecesWithPatterns(form, color, pattern);
+            }
+            else
+            {
+                // Comportamiento normal para piezas no tileables
+                Form.sprite = form;
+                Form.color = color;
+                Form.type = Image.Type.Simple;
+                Pattern.sprite = pattern;
+                Pattern.type = Image.Type.Simple;
+            }
         }
-        
     }
 
     [Serializable]
@@ -235,13 +251,139 @@ public class EditablePieces
         public int Points;
         public int Chance;
     }
+    
+    private void CreateTiledPiecesWithPatterns(Sprite form, Color color, Sprite pattern)
+    {
+        if (Form == null) return;
+        
+        // Limpiar tiles anteriores
+        ClearTiles();
+        
+        // Crear contenedor si no existe
+        if (tilesContainer == null)
+        {
+            tilesContainer = new GameObject("TilesContainer");
+            RectTransform containerRect = tilesContainer.AddComponent<RectTransform>();
+            containerRect.SetParent(Form.transform.parent, false);
+            
+            // Configurar el contenedor para que ocupe todo el espacio
+            containerRect.anchorMin = Vector2.zero;
+            containerRect.anchorMax = Vector2.one;
+            containerRect.offsetMin = Vector2.zero;
+            containerRect.offsetMax = Vector2.zero;
+            containerRect.pivot = new Vector2(0.5f, 0.5f);
+            
+            // Asegurar que esté en la misma posición en la jerarquía
+            int formIndex = Form.transform.GetSiblingIndex();
+            containerRect.SetSiblingIndex(formIndex);
+        }
+        
+        // Ocultar las imágenes originales
+        Form.enabled = false;
+        Pattern.enabled = false;
+        
+        // Obtener el tamaño del contenedor
+        RectTransform parentRect = Form.GetComponent<RectTransform>();
+        float containerWidth = parentRect.rect.width;
+        float containerHeight = parentRect.rect.height;
+        
+        // Calcular el tamaño de cada tile
+        float spriteWidth = form.rect.width;
+        float spriteHeight = form.rect.height;
+        float pixelsPerUnit = form.pixelsPerUnit;
+        
+        float tileWidth = (spriteWidth / pixelsPerUnit) * 100f / FormTileScale;
+        float tileHeight = (spriteHeight / pixelsPerUnit) * 100f / FormTileScale;
+        
+        // Calcular cuántos tiles necesitamos
+        int tilesX = Mathf.CeilToInt(containerWidth / tileWidth) + 1;
+        int tilesY = Mathf.CeilToInt(containerHeight / tileHeight) + 1;
+        
+        // Calcular el offset inicial para centrar
+        float startX = -(tilesX * tileWidth) / 2f + tileWidth / 2f;
+        float startY = -(tilesY * tileHeight) / 2f + tileHeight / 2f;
+        
+        // Crear cada tile
+        for (int y = 0; y < tilesY; y++)
+        {
+            for (int x = 0; x < tilesX; x++)
+            {
+                GameObject tileObj = new GameObject($"Tile_{x}_{y}");
+                RectTransform tileRect = tileObj.AddComponent<RectTransform>();
+                tileRect.SetParent(tilesContainer.transform, false);
+                
+                // Configurar posición y tamaño del tile
+                tileRect.sizeDelta = new Vector2(tileWidth, tileHeight);
+                tileRect.anchoredPosition = new Vector2(
+                    startX + x * tileWidth,
+                    startY + y * tileHeight
+                );
+                tileRect.pivot = new Vector2(0.5f, 0.5f);
+                
+                // Agregar imagen de forma
+                Image formImage = tileObj.AddComponent<Image>();
+                formImage.sprite = form;
+                formImage.color = color;
+                formImage.type = Image.Type.Simple;
+                formImage.raycastTarget = false;
+                
+                // Crear patrón como hijo
+                GameObject patternObj = new GameObject("Pattern");
+                RectTransform patternRect = patternObj.AddComponent<RectTransform>();
+                patternRect.SetParent(tileRect, false);
+                
+                // El patrón ocupa todo el tile
+                patternRect.anchorMin = Vector2.zero;
+                patternRect.anchorMax = Vector2.one;
+                patternRect.offsetMin = Vector2.zero;
+                patternRect.offsetMax = Vector2.zero;
+                patternRect.pivot = new Vector2(0.5f, 0.5f);
+                
+                Image patternImage = patternObj.AddComponent<Image>();
+                patternImage.sprite = pattern;
+                patternImage.type = Image.Type.Simple;
+                patternImage.raycastTarget = false;
+                
+                tileObjects.Add(tileObj);
+            }
+        }
+    }
+    
+    private void ClearTiles()
+    {
+        foreach (var tile in tileObjects)
+        {
+            if (tile != null)
+            {
+                UnityEngine.Object.Destroy(tile);
+            }
+        }
+        tileObjects.Clear();
+    }
+    
     public void ForceChange(Sprite form, Color color, Sprite pattern)
     {
-        
         _changeCounter = 0;
-        Form.sprite = form;
-        Form.color = color;
-        Pattern.sprite = pattern;
         
+        if (IsTileable)
+        {
+            CreateTiledPiecesWithPatterns(form, color, pattern);
+        }
+        else
+        {
+            // Comportamiento normal para piezas no tileables
+            Form.sprite = form;
+            Form.color = color;
+            Form.type = Image.Type.Simple;
+            Pattern.sprite = pattern;
+            Pattern.type = Image.Type.Simple;
+            
+            // Asegurar que las imágenes originales estén visibles
+            Form.enabled = true;
+            Pattern.enabled = true;
+            
+            // Limpiar tiles si existen
+            ClearTiles();
+        }
     }
 }
