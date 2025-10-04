@@ -5,6 +5,8 @@ public class PointSystem : MonoBehaviour
 {
     [SerializeField] private TextMeshProUGUI score;
     [SerializeField] private TextMeshProUGUI multiplier;
+    [SerializeField] private int minMultiplierValue = 3;
+    [SerializeField] private int maxMultiplierValue = 5;
     public int scoreValue;
     public int multiplierValue;
     public int streak;
@@ -25,11 +27,11 @@ public class PointSystem : MonoBehaviour
     private void CheckStreak()
     {
         streak++;
-        if (streak >= 3)
+        if (streak >= minMultiplierValue)
         {
             multiplierValue++;
-            if (multiplierValue >= 5)
-                multiplierValue = 5;
+            if (multiplierValue >= maxMultiplierValue)
+                multiplierValue = maxMultiplierValue;
             streak = 0;
         }
     }

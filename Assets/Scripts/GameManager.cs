@@ -32,6 +32,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private float speedDecreaseOnLose = 0.2f;
     [SerializeField] private float shakeDuration = 0.2f;
     [SerializeField] private float shakeIntensity = 10f;
+    [SerializeField] private float bgScrollSpeedIncrease = 10f;
 
     [Header("Audio")] [SerializeField] private AudioSource bgmSource;
     [SerializeField] private float pitchIncreaseFactor = 1.2f;
@@ -68,6 +69,14 @@ public class GameManager : MonoBehaviour
             bgmSource.Play();
         }
 
+        foreach (var piece in EditablePieces)
+        {
+            if (piece.IsTileable)
+            {
+                piece.SetRandomScrollDirection();
+            }
+        }
+
         NextRound();
     }
 
@@ -77,6 +86,9 @@ public class GameManager : MonoBehaviour
         SelectAEditablePiece();
         PromtText.text = "Press " + _currentPiece.Name + " " + _currentPromt.ToString();
         NextPiece();
+        
+        _currentPiece.SetRandomScrollDirection();
+        
         timer.StartTimer(currentTimerDuration);
     }
 
@@ -151,6 +163,7 @@ public class GameManager : MonoBehaviour
         pointSystem.Fail();
         loseSfxSource.Play();
         IncreaseBGMPitch();
+        IncreaseBackgroundScrollSpeed();
         StartCoroutine(ShakeForm());
         currentTimerDuration = Mathf.Min(StartingTime, currentTimerDuration + speedDecreaseOnLose);
         NextRound();
@@ -160,6 +173,17 @@ public class GameManager : MonoBehaviour
     {
         if (bgmSource == null) return;
         bgmSource.pitch = Mathf.Min(maxPitch, bgmSource.pitch * pitchIncreaseFactor);
+    }
+
+    private void IncreaseBackgroundScrollSpeed()
+    {
+        foreach (var piece in EditablePieces)
+        {
+            if (piece.IsTileable)
+            {
+                piece.TileScrollSpeed += bgScrollSpeedIncrease;
+            }
+        }
     }
 
     private IEnumerator ShakeForm()
@@ -193,6 +217,11 @@ public class GameManager : MonoBehaviour
                 break;
             }
         }
+
+        foreach (var piece in EditablePieces)
+        {
+            piece.UpdateTileScroll(Time.deltaTime);
+        }
     }
 }
 
@@ -216,11 +245,25 @@ public class EditablePieces
     public Image Form;
     public Image Pattern;
     public bool IsTileable = false;
-    [Range(0.1f, 10f)]
     public float FormTileScale = 1f;
+    public float TileScrollSpeed = 50f;
+    public float TileSpacing = 0f;
 
     private GameObject tilesContainer;
     private List<GameObject> tileObjects = new List<GameObject>();
+    private Dictionary<GameObject, Vector2> tileBasePositions = new Dictionary<GameObject, Vector2>();
+    
+    private Color _currentColor;
+    private Sprite _currentForm;
+    private Sprite _currentPattern;
+    
+    private Vector2 _scrollDirection = Vector2.zero;
+    private Vector2 _currentOffset = Vector2.zero;
+    private Vector2 _effectiveTileSize = Vector2.zero;
+    
+    public Color CurrentColor => _currentColor;
+    public Sprite CurrentForm => _currentForm;
+    public Sprite CurrentPattern => _currentPattern;
 
     public void Change(Sprite form, Color color, Sprite pattern)
     {
@@ -228,6 +271,10 @@ public class EditablePieces
         if (_changeCounter >= ChangeFrequency)
         {
             _changeCounter = 0;
+            
+            _currentForm = form;
+            _currentColor = color;
+            _currentPattern = pattern;
             
             if (IsTileable)
             {
@@ -255,38 +302,33 @@ public class EditablePieces
     {
         if (Form == null) return;
         
-        // Limpiar tiles anteriores
         ClearTiles();
         
-        // Crear contenedor si no existe
         if (tilesContainer == null)
         {
             tilesContainer = new GameObject("TilesContainer");
             RectTransform containerRect = tilesContainer.AddComponent<RectTransform>();
             containerRect.SetParent(Form.transform.parent, false);
             
-            // Configurar el contenedor para que ocupe todo el espacio
             containerRect.anchorMin = Vector2.zero;
             containerRect.anchorMax = Vector2.one;
             containerRect.offsetMin = Vector2.zero;
             containerRect.offsetMax = Vector2.zero;
             containerRect.pivot = new Vector2(0.5f, 0.5f);
             
-            // Asegurar que esté en la misma posición en la jerarquía
+            tilesContainer.AddComponent<RectMask2D>();
+            
             int formIndex = Form.transform.GetSiblingIndex();
             containerRect.SetSiblingIndex(formIndex);
         }
         
-        // Ocultar las imágenes originales
         Form.enabled = false;
         Pattern.enabled = false;
         
-        // Obtener el tamaño del contenedor
         RectTransform parentRect = Form.GetComponent<RectTransform>();
         float containerWidth = parentRect.rect.width;
         float containerHeight = parentRect.rect.height;
         
-        // Calcular el tamaño de cada tile
         float spriteWidth = form.rect.width;
         float spriteHeight = form.rect.height;
         float pixelsPerUnit = form.pixelsPerUnit;
@@ -294,15 +336,17 @@ public class EditablePieces
         float tileWidth = (spriteWidth / pixelsPerUnit) * 100f / FormTileScale;
         float tileHeight = (spriteHeight / pixelsPerUnit) * 100f / FormTileScale;
         
-        // Calcular cuántos tiles necesitamos
-        int tilesX = Mathf.CeilToInt(containerWidth / tileWidth) + 1;
-        int tilesY = Mathf.CeilToInt(containerHeight / tileHeight) + 1;
+        float effectiveTileWidth = tileWidth + TileSpacing;
+        float effectiveTileHeight = tileHeight + TileSpacing;
         
-        // Calcular el offset inicial para centrar
-        float startX = -(tilesX * tileWidth) / 2f + tileWidth / 2f;
-        float startY = -(tilesY * tileHeight) / 2f + tileHeight / 2f;
+        _effectiveTileSize = new Vector2(effectiveTileWidth, effectiveTileHeight);
         
-        // Crear cada tile
+        int tilesX = Mathf.CeilToInt(containerWidth / effectiveTileWidth) + 2;
+        int tilesY = Mathf.CeilToInt(containerHeight / effectiveTileHeight) + 2;
+        
+        float startX = -(tilesX * effectiveTileWidth) / 2f + effectiveTileWidth / 2f;
+        float startY = -(tilesY * effectiveTileHeight) / 2f + effectiveTileHeight / 2f;
+        
         for (int y = 0; y < tilesY; y++)
         {
             for (int x = 0; x < tilesX; x++)
@@ -311,27 +355,22 @@ public class EditablePieces
                 RectTransform tileRect = tileObj.AddComponent<RectTransform>();
                 tileRect.SetParent(tilesContainer.transform, false);
                 
-                // Configurar posición y tamaño del tile
+                Vector2 basePos = new Vector2(startX + x * effectiveTileWidth, startY + y * effectiveTileHeight);
+                
                 tileRect.sizeDelta = new Vector2(tileWidth, tileHeight);
-                tileRect.anchoredPosition = new Vector2(
-                    startX + x * tileWidth,
-                    startY + y * tileHeight
-                );
+                tileRect.anchoredPosition = basePos;
                 tileRect.pivot = new Vector2(0.5f, 0.5f);
                 
-                // Agregar imagen de forma
                 Image formImage = tileObj.AddComponent<Image>();
                 formImage.sprite = form;
                 formImage.color = color;
                 formImage.type = Image.Type.Simple;
                 formImage.raycastTarget = false;
                 
-                // Crear patrón como hijo
                 GameObject patternObj = new GameObject("Pattern");
                 RectTransform patternRect = patternObj.AddComponent<RectTransform>();
                 patternRect.SetParent(tileRect, false);
                 
-                // El patrón ocupa todo el tile
                 patternRect.anchorMin = Vector2.zero;
                 patternRect.anchorMax = Vector2.one;
                 patternRect.offsetMin = Vector2.zero;
@@ -344,8 +383,11 @@ public class EditablePieces
                 patternImage.raycastTarget = false;
                 
                 tileObjects.Add(tileObj);
+                tileBasePositions[tileObj] = basePos;
             }
         }
+        
+        _currentOffset = Vector2.zero;
     }
     
     private void ClearTiles()
@@ -358,11 +400,16 @@ public class EditablePieces
             }
         }
         tileObjects.Clear();
+        tileBasePositions.Clear();
     }
     
     public void ForceChange(Sprite form, Color color, Sprite pattern)
     {
         _changeCounter = 0;
+        
+        _currentForm = form;
+        _currentColor = color;
+        _currentPattern = pattern;
         
         if (IsTileable)
         {
@@ -370,19 +417,71 @@ public class EditablePieces
         }
         else
         {
-            // Comportamiento normal para piezas no tileables
             Form.sprite = form;
             Form.color = color;
             Form.type = Image.Type.Simple;
             Pattern.sprite = pattern;
             Pattern.type = Image.Type.Simple;
             
-            // Asegurar que las imágenes originales estén visibles
             Form.enabled = true;
             Pattern.enabled = true;
             
-            // Limpiar tiles si existen
             ClearTiles();
+        }
+    }
+
+    public void SetRandomScrollDirection()
+    {
+        if (!IsTileable) return;
+
+        int direction = Random.Range(0, 4);
+        switch (direction)
+        {
+            case 0:
+                _scrollDirection = Vector2.right;
+                break;
+            case 1:
+                _scrollDirection = Vector2.left;
+                break;
+            case 2:
+                _scrollDirection = Vector2.up;
+                break;
+            case 3:
+                _scrollDirection = Vector2.down;
+                break;
+        }
+    }
+
+    public void UpdateTileScroll(float deltaTime)
+    {
+        if (!IsTileable || tilesContainer == null || _scrollDirection == Vector2.zero || tileObjects.Count == 0) return;
+        if (_effectiveTileSize == Vector2.zero) return;
+        
+        _currentOffset += _scrollDirection * TileScrollSpeed * deltaTime;
+        
+        foreach (var tileObj in tileObjects)
+        {
+            if (tileObj != null && tileBasePositions.ContainsKey(tileObj))
+            {
+                RectTransform tileRect = tileObj.GetComponent<RectTransform>();
+                if (tileRect != null)
+                {
+                    Vector2 basePosition = tileBasePositions[tileObj];
+                    Vector2 offset = _currentOffset;
+                    
+                    if (_scrollDirection.x != 0)
+                    {
+                        offset.x = offset.x % _effectiveTileSize.x;
+                    }
+                    
+                    if (_scrollDirection.y != 0)
+                    {
+                        offset.y = offset.y % _effectiveTileSize.y;
+                    }
+                    
+                    tileRect.anchoredPosition = basePosition + offset;
+                }
+            }
         }
     }
 }
