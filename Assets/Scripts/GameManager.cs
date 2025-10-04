@@ -235,7 +235,6 @@ public class EditablePieces
             }
             else
             {
-                // Comportamiento normal para piezas no tileables
                 Form.sprite = form;
                 Form.color = color;
                 Form.type = Image.Type.Simple;
