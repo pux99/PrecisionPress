@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using Random = UnityEngine.Random;
@@ -206,17 +207,45 @@ public class GameManager : MonoBehaviour
         SceneManager.LoadScene("Loss");
     }
 
+    public void ButtonInput(/*int code,*/InputAction.CallbackContext context)
+    {
+        Debug.Log(context.action.name);
+        if (context.performed)
+            switch (context.action.name)
+            {
+                case "Form1":
+                    CheckPromt(pieces[0]);
+                    break;
+                case "Form2":
+                    CheckPromt(pieces[1]);
+                    break;
+                case "Form3":
+                    CheckPromt(pieces[2]);
+                    break;
+                case "Form4":
+                    CheckPromt(pieces[3]);
+                    break;
+                case "Form5":
+                    CheckPromt(pieces[4]);
+                    break;
+                case "Form6":
+                    CheckPromt(pieces[5]);
+                    break;
+            }
+            //CheckPromt(pieces[code-1]);
+    }
     private void Update()
     {
-        KeyCode[] keys = { KeyCode.Q, KeyCode.W, KeyCode.E, KeyCode.R, KeyCode.T };
-        for (int i = 0; i < keys.Length && i < pieces.Count; i++)
-        {
-            if (Input.GetKeyDown(keys[i]))
-            {
-                CheckPromt(pieces[i]);
-                break;
-            }
-        }
+        //KeyCode[] keys = { KeyCode.Q, KeyCode.W, KeyCode.E, KeyCode.R, KeyCode.T };
+        //for (int i = 0; i < keys.Length && i < pieces.Count; i++)
+        //{
+        //    
+        //    if (Input.GetKeyDown(keys[i]))
+        //    {
+        //        CheckPromt(pieces[i]);
+        //        break;
+        //    }
+        //}
 
         foreach (var piece in EditablePieces)
         {
@@ -354,6 +383,7 @@ public class EditablePieces
                 GameObject tileObj = new GameObject($"Tile_{x}_{y}");
                 RectTransform tileRect = tileObj.AddComponent<RectTransform>();
                 tileRect.SetParent(tilesContainer.transform, false);
+                tileObj.AddComponent<Mask>();
                 
                 Vector2 basePos = new Vector2(startX + x * effectiveTileWidth, startY + y * effectiveTileHeight);
                 
