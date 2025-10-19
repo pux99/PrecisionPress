@@ -24,29 +24,29 @@ public class InitialsInput : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.UpArrow))
+        if (Input.GetKeyDown(KeyCode.Q))
         {
             letterIndices[currentIndex] = (letterIndices[currentIndex] + 1) % alphabet.Length;
             UpdateLetters();
             StartCoroutine(FlashArrow(upArrow, arrowPressedColor));
         }
-        if (Input.GetKeyDown(KeyCode.DownArrow))
+        if (Input.GetKeyDown(KeyCode.W))
         {
             letterIndices[currentIndex] = (letterIndices[currentIndex] - 1 + alphabet.Length) % alphabet.Length;
             UpdateLetters();
             StartCoroutine(FlashArrow(downArrow, arrowPressedColor));
         }
-        if (Input.GetKeyDown(KeyCode.RightArrow))
+        if (Input.GetKeyDown(KeyCode.R))
         {
             currentIndex = Mathf.Min(currentIndex + 1, 2);
             UpdateArrows();
         }
-        if (Input.GetKeyDown(KeyCode.LeftArrow))
+        if (Input.GetKeyDown(KeyCode.E))
         {
             currentIndex = Mathf.Max(currentIndex - 1, 0);
             UpdateArrows();
         }
-        if (Input.GetKeyDown(KeyCode.Return))
+        if (Input.GetKeyDown(KeyCode.T))
         {
             string initials = new string(new char[] {
                 alphabet[letterIndices[0]],
