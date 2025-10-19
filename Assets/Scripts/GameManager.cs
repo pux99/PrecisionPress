@@ -34,6 +34,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private float shakeDuration = 0.2f;
     [SerializeField] private float shakeIntensity = 10f;
     [SerializeField] private float bgScrollSpeedIncrease = 10f;
+    [SerializeField] private string scoreScene;
 
     [Header("Audio")] [SerializeField] private AudioSource bgmSource;
     [SerializeField] private float pitchIncreaseFactor = 1.2f;
@@ -204,7 +205,8 @@ public class GameManager : MonoBehaviour
 
     private void LossGame()
     {
-        SceneManager.LoadScene("Loss");
+        PlayerPrefs.SetInt("PlayerScore", pointSystem.scoreValue);
+        SceneManager.LoadScene(scoreScene);
     }
 
     public void ButtonInput(/*int code,*/InputAction.CallbackContext context)
