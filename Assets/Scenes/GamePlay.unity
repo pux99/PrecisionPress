@@ -607,19 +607,6 @@ MonoBehaviour:
     FormTileScale: 1
     TileScrollSpeed: 50
     TileSpacing: 0
-  - Name: Clock
-    ChangeFrequency: 5
-    ChanceToBeSelected:
-    - Points: 0
-      Chance: 0
-    - Points: 5
-      Chance: 5
-    Form: {fileID: 0}
-    Pattern: {fileID: 2128908164}
-    IsTileable: 0
-    FormTileScale: 1
-    TileScrollSpeed: 50
-    TileSpacing: 0
   - Name: BackgroundPiece
     ChangeFrequency: 1
     ChanceToBeSelected:

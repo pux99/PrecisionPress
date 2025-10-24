@@ -8,6 +8,11 @@ public class FormPromt : Promt
     }
     public override bool Check(EditablePieces currentPiece, Piece selected)
     {
-        return currentPiece.Form.sprite == selected.form;
+        if (currentPiece == null || selected == null) return false;
+
+        if (currentPiece.Form != null && currentPiece.Form.sprite != null)
+            return currentPiece.Form.sprite == selected.form;
+
+        return currentPiece.CurrentForm == selected.form;
     }
 }
