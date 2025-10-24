@@ -628,9 +628,9 @@ MonoBehaviour:
     Form: {fileID: 643239921}
     Pattern: {fileID: 557245380}
     IsTileable: 1
-    FormTileScale: 5
-    TileScrollSpeed: 10
-    TileSpacing: 50
+    FormTileScale: 1
+    TileScrollSpeed: 15
+    TileSpacing: 150
   PromtText: {fileID: 767923865}
   timer: {fileID: 2002176138}
   StartingTime: 10
