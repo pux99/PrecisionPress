@@ -59,13 +59,14 @@ public class InitialsInput : MonoBehaviour
             {
                 int score = PlayerPrefs.GetInt("PlayerScore", 0);
                 manager.AddScore(initials, score);
-                PlayerPrefs.DeleteKey("PlayerScore");
 
                 var ui = FindFirstObjectByType<LeaderboardUI>();
                 if (ui != null)
                 {
                     ui.Refresh();
                 }
+
+                PlayerPrefs.DeleteKey("PlayerScore");
             }
 
             StartCoroutine(LoadSceneAfterDelay());
