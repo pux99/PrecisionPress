@@ -47,8 +47,35 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
-        formRectTransform = EditablePieces[0].Form.GetComponent<RectTransform>();
-        originalFormPosition = formRectTransform.anchoredPosition;
+        EditablePieces firstWithForm = null;
+        foreach (var e in EditablePieces)
+        {
+            if (e != null && e.Form != null)
+            {
+                firstWithForm = e;
+                break;
+            }
+        }
+
+        if (firstWithForm != null)
+        {
+            formRectTransform = firstWithForm.Form.GetComponent<RectTransform>();
+            originalFormPosition = formRectTransform.anchoredPosition;
+        }
+        else
+        {
+            if (EditablePieces.Count > 0 && EditablePieces[0] != null && EditablePieces[0].Form != null)
+            {
+                formRectTransform = EditablePieces[0].Form.GetComponent<RectTransform>();
+                originalFormPosition = formRectTransform.anchoredPosition;
+            }
+            else
+            {
+                formRectTransform = null;
+                originalFormPosition = Vector2.zero;
+            }
+        }
+
         currentTimerDuration = StartingTime;
 
         promts.Add(new ColorPromt());
@@ -73,10 +100,15 @@ public class GameManager : MonoBehaviour
 
         foreach (var piece in EditablePieces)
         {
-            if (piece.IsTileable)
+            if (piece != null && piece.IsTileable)
             {
                 piece.SetRandomScrollDirection();
             }
+        }
+
+        if (EditablePieces != null && EditablePieces.Count > 0)
+        {
+            _currentPiece = EditablePieces[0];
         }
 
         NextRound();
@@ -86,40 +118,91 @@ public class GameManager : MonoBehaviour
     {
         _currentPromt = promts[Random.Range(0, promts.Count)];
         SelectAEditablePiece();
+
+        if (_currentPiece == null)
+        {
+            Debug.LogWarning("NextRound: no EditablePiece available, skipping round setup.");
+            PromtText.text = "Press ? " + _currentPromt.ToString();
+            return;
+        }
+
         PromtText.text = "Press " + _currentPiece.Name + " " + _currentPromt.ToString();
         NextPiece();
         
-        _currentPiece.SetRandomScrollDirection();
+        _currentPiece?.SetRandomScrollDirection();
         
         timer.StartTimer(currentTimerDuration);
     }
 
     private void SelectAEditablePiece()
     {
-        var chanceSum=0;
-        foreach (var piece in EditablePieces)
+        var chanceSum = 0;
+        if (EditablePieces == null || EditablePieces.Count == 0)
         {
-            piece.ChanceToBeSelected.Sort((x, y) => x.Chance.CompareTo(y.Points));
-            var toSum=0;
-            foreach (var chance in piece.ChanceToBeSelected)
-                if (chance.Points <= pointSystem.scoreValue)
-                    toSum=chance.Chance;
-            chanceSum+=toSum;
+            _currentPiece = null;
+            return;
         }
-        
-        var random = Random.Range(1,chanceSum+1);
-        
+
         foreach (var piece in EditablePieces)
         {
-            var toRest=0;
+            if (piece == null || piece.ChanceToBeSelected == null) continue;
+            try
+            {
+                piece.ChanceToBeSelected.Sort((x, y) => x.Chance.CompareTo(y.Points));
+            }
+            catch
+            {
+                //Ignore sort errors
+            }
+
+            var toSum = 0;
             foreach (var chance in piece.ChanceToBeSelected)
                 if (chance.Points <= pointSystem.scoreValue)
-                    toRest=chance.Chance;
+                    toSum = chance.Chance;
+            chanceSum += toSum;
+        }
+
+        if (chanceSum <= 0)
+        {
+            foreach (var piece in EditablePieces)
+            {
+                if (piece != null)
+                {
+                    _currentPiece = piece;
+                    return;
+                }
+            }
+
+            _currentPiece = null;
+            return;
+        }
+
+        var random = Random.Range(1, chanceSum + 1);
+
+        foreach (var piece in EditablePieces)
+        {
+            if (piece == null || piece.ChanceToBeSelected == null) continue;
+            var toRest = 0;
+            foreach (var chance in piece.ChanceToBeSelected)
+                if (chance.Points <= pointSystem.scoreValue)
+                    toRest = chance.Chance;
             random -= toRest;
             if (random <= 0)
             {
-                _currentPiece=piece;
+                _currentPiece = piece;
                 break;
+            }
+        }
+
+        if (_currentPiece == null)
+        {
+            foreach (var piece in EditablePieces)
+            {
+                if (piece != null)
+                {
+                    _currentPiece = piece;
+                    break;
+                }
             }
         }
     }
@@ -143,6 +226,18 @@ public class GameManager : MonoBehaviour
 
     public void CheckPromt(Piece selected)
     {
+        if (_currentPromt == null)
+        {
+            Debug.LogWarning("CheckPromt called but _currentPromt is null");
+            return;
+        }
+
+        if (_currentPiece == null || selected == null)
+        {
+            Debug.LogWarning("CheckPromt called with null pieces");
+            return;
+        }
+
         if (!_currentPromt.Check(_currentPiece, selected))
         {
             Lose();
@@ -154,7 +249,7 @@ public class GameManager : MonoBehaviour
     private void Win()
     {
         pointSystem.Score();
-        winSfxSource.Play();
+        if (winSfxSource != null) winSfxSource.Play();
         currentTimerDuration = Mathf.Max(minTimerDuration, currentTimerDuration - speedIncreaseOnWin);
         NextRound();
     }
@@ -163,7 +258,7 @@ public class GameManager : MonoBehaviour
     {
         health.TakeDamage();
         pointSystem.Fail();
-        loseSfxSource.Play();
+        if (loseSfxSource != null) loseSfxSource.Play();
         IncreaseBGMPitch();
         IncreaseBackgroundScrollSpeed();
         StartCoroutine(ShakeForm());
@@ -190,6 +285,11 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator ShakeForm()
     {
+        if (formRectTransform == null)
+        {
+            yield break;
+        }
+
         float elapsed = 0f;
         while (elapsed < shakeDuration)
         {
@@ -212,29 +312,29 @@ public class GameManager : MonoBehaviour
     public void ButtonInput(/*int code,*/InputAction.CallbackContext context)
     {
         Debug.Log(context.action.name);
-        if (context.performed)
-            switch (context.action.name)
-            {
-                case "Form1":
-                    CheckPromt(pieces[0]);
-                    break;
-                case "Form2":
-                    CheckPromt(pieces[1]);
-                    break;
-                case "Form3":
-                    CheckPromt(pieces[2]);
-                    break;
-                case "Form4":
-                    CheckPromt(pieces[3]);
-                    break;
-                case "Form5":
-                    CheckPromt(pieces[4]);
-                    break;
-                case "Form6":
-                    CheckPromt(pieces[5]);
-                    break;
-            }
-            //CheckPromt(pieces[code-1]);
+        if (!context.performed) return;
+
+        switch (context.action.name)
+        {
+            case "Form1":
+                if (pieces != null && pieces.Count > 0) CheckPromt(pieces[0]);
+                break;
+            case "Form2":
+                if (pieces != null && pieces.Count > 1) CheckPromt(pieces[1]);
+                break;
+            case "Form3":
+                if (pieces != null && pieces.Count > 2) CheckPromt(pieces[2]);
+                break;
+            case "Form4":
+                if (pieces != null && pieces.Count > 3) CheckPromt(pieces[3]);
+                break;
+            case "Form5":
+                if (pieces != null && pieces.Count > 4) CheckPromt(pieces[4]);
+                break;
+            case "Form6":
+                if (pieces != null && pieces.Count > 5) CheckPromt(pieces[5]);
+                break;
+        }
     }
     private void Update()
     {
@@ -329,111 +429,131 @@ public class EditablePieces
         public int Chance;
     }
     
-    private void CreateTiledPiecesWithPatterns(Sprite form, Color color, Sprite pattern)
+    // csharp
+private void CreateTiledPiecesWithPatterns(Sprite form, Color color, Sprite pattern)
+{
+    if (Form == null) return;
+
+    // Keep the original/hidden images in sync so any code that reads them (prompts, checks) sees correct values
+    Form.sprite = form;
+    Form.color = color;
+    Form.type = Image.Type.Simple;
+    Pattern.sprite = pattern;
+    Pattern.type = Image.Type.Simple;
+    Pattern.color = Color.white; // pattern usually uses its own colors/alpha, keep it white to preserve sprite colors
+
+    ClearTiles();
+
+    if (tilesContainer == null)
     {
-        if (Form == null) return;
-        
-        ClearTiles();
-        
-        if (tilesContainer == null)
-        {
-            tilesContainer = new GameObject("TilesContainer");
-            RectTransform containerRect = tilesContainer.AddComponent<RectTransform>();
-            containerRect.SetParent(Form.transform.parent, false);
-            
-            containerRect.anchorMin = Vector2.zero;
-            containerRect.anchorMax = Vector2.one;
-            containerRect.offsetMin = Vector2.zero;
-            containerRect.offsetMax = Vector2.zero;
-            containerRect.pivot = new Vector2(0.5f, 0.5f);
-            
-            tilesContainer.AddComponent<RectMask2D>();
-            
-            int formIndex = Form.transform.GetSiblingIndex();
-            containerRect.SetSiblingIndex(formIndex);
-        }
-        
-        Form.enabled = false;
-        Pattern.enabled = false;
-        
-        RectTransform parentRect = Form.GetComponent<RectTransform>();
-        float containerWidth = parentRect.rect.width;
-        float containerHeight = parentRect.rect.height;
-        
-        float spriteWidth = form.rect.width;
-        float spriteHeight = form.rect.height;
-        float pixelsPerUnit = form.pixelsPerUnit;
-        
-        float tileWidth = (spriteWidth / pixelsPerUnit) * 100f / FormTileScale;
-        float tileHeight = (spriteHeight / pixelsPerUnit) * 100f / FormTileScale;
-        
-        float effectiveTileWidth = tileWidth + TileSpacing;
-        float effectiveTileHeight = tileHeight + TileSpacing;
-        
-        _effectiveTileSize = new Vector2(effectiveTileWidth, effectiveTileHeight);
-        
-        int tilesX = Mathf.CeilToInt(containerWidth / effectiveTileWidth) + 2;
-        int tilesY = Mathf.CeilToInt(containerHeight / effectiveTileHeight) + 2;
-        
-        float startX = -(tilesX * effectiveTileWidth) / 2f + effectiveTileWidth / 2f;
-        float startY = -(tilesY * effectiveTileHeight) / 2f + effectiveTileHeight / 2f;
-        
-        for (int y = 0; y < tilesY; y++)
-        {
-            for (int x = 0; x < tilesX; x++)
-            {
-                GameObject tileObj = new GameObject($"Tile_{x}_{y}");
-                RectTransform tileRect = tileObj.AddComponent<RectTransform>();
-                tileRect.SetParent(tilesContainer.transform, false);
-                tileObj.AddComponent<Mask>();
-                
-                Vector2 basePos = new Vector2(startX + x * effectiveTileWidth, startY + y * effectiveTileHeight);
-                
-                tileRect.sizeDelta = new Vector2(tileWidth, tileHeight);
-                tileRect.anchoredPosition = basePos;
-                tileRect.pivot = new Vector2(0.5f, 0.5f);
-                
-                Image formImage = tileObj.AddComponent<Image>();
-                formImage.sprite = form;
-                formImage.color = color;
-                formImage.type = Image.Type.Simple;
-                formImage.raycastTarget = false;
-                
-                GameObject patternObj = new GameObject("Pattern");
-                RectTransform patternRect = patternObj.AddComponent<RectTransform>();
-                patternRect.SetParent(tileRect, false);
-                
-                patternRect.anchorMin = Vector2.zero;
-                patternRect.anchorMax = Vector2.one;
-                patternRect.offsetMin = Vector2.zero;
-                patternRect.offsetMax = Vector2.zero;
-                patternRect.pivot = new Vector2(0.5f, 0.5f);
-                
-                Image patternImage = patternObj.AddComponent<Image>();
-                patternImage.sprite = pattern;
-                patternImage.type = Image.Type.Simple;
-                patternImage.raycastTarget = false;
-                
-                tileObjects.Add(tileObj);
-                tileBasePositions[tileObj] = basePos;
-            }
-        }
-        
-        _currentOffset = Vector2.zero;
+        tilesContainer = new GameObject("TilesContainer");
+        RectTransform containerRect = tilesContainer.AddComponent<RectTransform>();
+        containerRect.SetParent(Form.transform.parent, false);
+
+        containerRect.anchorMin = Vector2.zero;
+        containerRect.anchorMax = Vector2.one;
+        containerRect.offsetMin = Vector2.zero;
+        containerRect.offsetMax = Vector2.zero;
+        containerRect.pivot = new Vector2(0.5f, 0.5f);
+
+        tilesContainer.AddComponent<RectMask2D>();
+
+        int formIndex = Form.transform.GetSiblingIndex();
+        containerRect.SetSiblingIndex(formIndex);
     }
+
+    // Hide the original images (we already updated their values)
+    Form.enabled = false;
+    Pattern.enabled = false;
+
+    RectTransform parentRect = Form.GetComponent<RectTransform>();
+    float containerWidth = parentRect.rect.width;
+    float containerHeight = parentRect.rect.height;
+
+    float spriteWidth = form.rect.width;
+    float spriteHeight = form.rect.height;
+    float pixelsPerUnit = form.pixelsPerUnit;
+
+    float tileWidth = (spriteWidth / pixelsPerUnit) * 100f / FormTileScale;
+    float tileHeight = (spriteHeight / pixelsPerUnit) * 100f / FormTileScale;
+
+    float effectiveTileWidth = tileWidth + TileSpacing;
+    float effectiveTileHeight = tileHeight + TileSpacing;
+
+    _effectiveTileSize = new Vector2(effectiveTileWidth, effectiveTileHeight);
+
+    int tilesX = Mathf.CeilToInt(containerWidth / effectiveTileWidth) + 2;
+    int tilesY = Mathf.CeilToInt(containerHeight / effectiveTileHeight) + 2;
+
+    float startX = -(tilesX * effectiveTileWidth) / 2f + effectiveTileWidth / 2f;
+    float startY = -(tilesY * effectiveTileHeight) / 2f + effectiveTileHeight / 2f;
+
+    for (int y = 0; y < tilesY; y++)
+    {
+        for (int x = 0; x < tilesX; x++)
+        {
+            GameObject tileObj = new GameObject($"Tile_{x}_{y}");
+            RectTransform tileRect = tileObj.AddComponent<RectTransform>();
+            tileRect.SetParent(tilesContainer.transform, false);
+            tileObj.AddComponent<Mask>();
+
+            Vector2 basePos = new Vector2(startX + x * effectiveTileWidth, startY + y * effectiveTileHeight);
+
+            tileRect.sizeDelta = new Vector2(tileWidth, tileHeight);
+            tileRect.anchoredPosition = basePos;
+            tileRect.pivot = new Vector2(0.5f, 0.5f);
+
+            Image formImage = tileObj.AddComponent<Image>();
+            formImage.sprite = form;
+            formImage.color = color;
+            formImage.type = Image.Type.Simple;
+            formImage.raycastTarget = false;
+
+            GameObject patternObj = new GameObject("Pattern");
+            RectTransform patternRect = patternObj.AddComponent<RectTransform>();
+            patternRect.SetParent(tileRect, false);
+
+            patternRect.anchorMin = Vector2.zero;
+            patternRect.anchorMax = Vector2.one;
+            patternRect.offsetMin = Vector2.zero;
+            patternRect.offsetMax = Vector2.zero;
+            patternRect.pivot = new Vector2(0.5f, 0.5f);
+
+            Image patternImage = patternObj.AddComponent<Image>();
+            patternImage.sprite = pattern;
+            patternImage.type = Image.Type.Simple;
+            patternImage.color = Color.white;
+            patternImage.raycastTarget = false;
+
+            tileObjects.Add(tileObj);
+            tileBasePositions[tileObj] = basePos;
+        }
+    }
+
+    _currentOffset = Vector2.zero;
+}
+
+
+
     
-    private void ClearTiles()
+private void ClearTiles()
+{
+    foreach (var tile in tileObjects)
     {
-        foreach (var tile in tileObjects)
+        if (tile != null)
         {
-            if (tile != null)
-            {
-                UnityEngine.Object.Destroy(tile);
-            }
+            UnityEngine.Object.Destroy(tile);
         }
-        tileObjects.Clear();
-        tileBasePositions.Clear();
     }
+    tileObjects.Clear();
+    tileBasePositions.Clear();
+
+    if (tilesContainer != null)
+    {
+        UnityEngine.Object.Destroy(tilesContainer);
+        tilesContainer = null;
+    }
+}
     
     public void ForceChange(Sprite form, Color color, Sprite pattern)
     {
