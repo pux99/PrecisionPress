@@ -42,11 +42,16 @@ public class GameManager : MonoBehaviour
     [SerializeField] private AudioSource loseSfxSource;
     [SerializeField] private AudioSource winSfxSource;
 
+    [Header("Input")]
+    [SerializeField] private float inputCooldown = 0.2f;
+    private float _lastInputTime = -Mathf.Infinity;
+
     private Vector2 originalFormPosition;
     private RectTransform formRectTransform;
 
     void Start()
     {
+        inputCooldown = Mathf.Max(0f, inputCooldown);
         EditablePieces firstWithForm = null;
         foreach (var e in EditablePieces)
         {
@@ -313,6 +318,9 @@ public class GameManager : MonoBehaviour
     {
         Debug.Log(context.action.name);
         if (!context.performed) return;
+
+        if (Time.time - _lastInputTime < inputCooldown) return;
+        _lastInputTime = Time.time;
 
         switch (context.action.name)
         {
