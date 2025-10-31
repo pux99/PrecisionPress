@@ -15,6 +15,7 @@ public class InitialsInput : MonoBehaviour
     private int[] letterIndices = new int[3];
     private int currentIndex = 0;
     private char[] alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".ToCharArray();
+    private bool hasSubmitted = false;
 
     void Start()
     {
@@ -46,8 +47,9 @@ public class InitialsInput : MonoBehaviour
             currentIndex = Mathf.Max(currentIndex - 1, 0);
             UpdateArrows();
         }
-        if (Input.GetKeyDown(KeyCode.T))
+        if (Input.GetKeyDown(KeyCode.T) && !hasSubmitted)
         {
+            hasSubmitted = true;
             string initials = new string(new char[] {
                 alphabet[letterIndices[0]],
                 alphabet[letterIndices[1]],
