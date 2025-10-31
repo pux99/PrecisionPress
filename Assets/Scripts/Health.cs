@@ -7,13 +7,13 @@ public class Health : MonoBehaviour
 {
     public event Action OnDeath;
     public int health;
-    HorizontalLayoutGroup layout;
+    VerticalLayoutGroup layout;
     private List<GameObject> healthContainers = new List<GameObject>();
     [SerializeField] private GameObject HeathContainer;
 
     private void Awake()
     {
-        layout = GetComponent<HorizontalLayoutGroup>();
+        layout = GetComponent<VerticalLayoutGroup>();
         for (int i = 0; i < health; i++)
         {
             healthContainers.Add(Instantiate(HeathContainer, transform));
