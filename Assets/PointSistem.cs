@@ -49,7 +49,7 @@ public class PointSystem : MonoBehaviour
             if (multiplierValue >= maxMultiplierValue)
                 multiplierValue = maxMultiplierValue;
             streak = 0;
-            StartCoroutine(ShakeMultiplier());
+           // StartCoroutine(ShakeMultiplier());
         }
     }
 
@@ -59,7 +59,7 @@ public class PointSystem : MonoBehaviour
         multiplier.text = "X" + multiplierValue;
     }
 
-    private IEnumerator ShakeMultiplier()
+    public IEnumerator ShakeMultiplier()
     {
         if (multiplierRectTransform == null)
         {

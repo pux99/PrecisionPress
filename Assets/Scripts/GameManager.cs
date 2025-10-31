@@ -254,6 +254,7 @@ public class GameManager : MonoBehaviour
     private void Win()
     {
         pointSystem.Score();
+        StartCoroutine(pointSystem.ShakeMultiplier());
         if (winSfxSource != null) winSfxSource.Play();
         currentTimerDuration = Mathf.Max(minTimerDuration, currentTimerDuration - speedIncreaseOnWin);
         NextRound();
