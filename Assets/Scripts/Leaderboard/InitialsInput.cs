@@ -2,6 +2,7 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using UnityEngine.InputSystem;
 using System.Collections;
 
 public class InitialsInput : MonoBehaviour
@@ -23,53 +24,57 @@ public class InitialsInput : MonoBehaviour
         UpdateArrows();
     }
 
-    void Update()
+    public void ButtonInput(InputAction.CallbackContext context)
     {
-        if (Input.GetKeyDown(KeyCode.W))
-        {
-            letterIndices[currentIndex] = (letterIndices[currentIndex] + 1) % alphabet.Length;
-            UpdateLetters();
-            StartCoroutine(FlashArrow(upArrow, arrowPressedColor));
-        }
-        if (Input.GetKeyDown(KeyCode.Q))
-        {
-            letterIndices[currentIndex] = (letterIndices[currentIndex] - 1 + alphabet.Length) % alphabet.Length;
-            UpdateLetters();
-            StartCoroutine(FlashArrow(downArrow, arrowPressedColor));
-        }
-        if (Input.GetKeyDown(KeyCode.E))
-        {
-            if (currentIndex < 2)
-            {
-                currentIndex++;
-                UpdateArrows();
-            }
-            else if (!hasSubmitted)
-            {
-                hasSubmitted = true;
-                string initials = new string(new char[] {
-                    alphabet[letterIndices[0]],
-                    alphabet[letterIndices[1]],
-                    alphabet[letterIndices[2]]
-                });
+        if (!context.performed) return;
 
-                var manager = FindFirstObjectByType<LeaderboardManager>();
-                if (manager != null)
+        switch (context.action.name)
+        {
+            case "Form1": // Q - Bajar letra
+                letterIndices[currentIndex] = (letterIndices[currentIndex] - 1 + alphabet.Length) % alphabet.Length;
+                UpdateLetters();
+                StartCoroutine(FlashArrow(downArrow, arrowPressedColor));
+                break;
+
+            case "Form2": // W - Subir letra
+                letterIndices[currentIndex] = (letterIndices[currentIndex] + 1) % alphabet.Length;
+                UpdateLetters();
+                StartCoroutine(FlashArrow(upArrow, arrowPressedColor));
+                break;
+
+            case "Form3": // E - Avanzar/Enviar
+                if (currentIndex < 2)
                 {
-                    int score = PlayerPrefs.GetInt("PlayerScore", 0);
-                    manager.AddScore(initials, score);
+                    currentIndex++;
+                    UpdateArrows();
+                }
+                else if (!hasSubmitted)
+                {
+                    hasSubmitted = true;
+                    string initials = new string(new char[] {
+                        alphabet[letterIndices[0]],
+                        alphabet[letterIndices[1]],
+                        alphabet[letterIndices[2]]
+                    });
 
-                    var ui = FindFirstObjectByType<LeaderboardUI>();
-                    if (ui != null)
+                    var manager = FindFirstObjectByType<LeaderboardManager>();
+                    if (manager != null)
                     {
-                        ui.Refresh();
+                        int score = PlayerPrefs.GetInt("PlayerScore", 0);
+                        manager.AddScore(initials, score);
+
+                        var ui = FindFirstObjectByType<LeaderboardUI>();
+                        if (ui != null)
+                        {
+                            ui.Refresh();
+                        }
+
+                        PlayerPrefs.DeleteKey("PlayerScore");
                     }
 
-                    PlayerPrefs.DeleteKey("PlayerScore");
+                    StartCoroutine(LoadSceneAfterDelay());
                 }
-
-                StartCoroutine(LoadSceneAfterDelay());
-            }
+                break;
         }
     }
 
