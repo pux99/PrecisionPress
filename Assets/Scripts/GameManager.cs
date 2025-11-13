@@ -131,7 +131,7 @@ public class GameManager : MonoBehaviour
             return;
         }
 
-        PromtText.text = "Press " + _currentPiece.Name + " " + _currentPromt.ToString();
+        PromtText.text = _currentPromt.ToString();
         NextPiece();
         
         _currentPiece?.SetRandomScrollDirection();

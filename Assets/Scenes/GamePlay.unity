@@ -2556,7 +2556,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Look at Color
+  m_text: Color
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 28d7bdca09929414a8e48c459d0d64b5, type: 2}
   m_sharedMaterial: {fileID: -5130852477769537024, guid: 28d7bdca09929414a8e48c459d0d64b5, type: 2}
