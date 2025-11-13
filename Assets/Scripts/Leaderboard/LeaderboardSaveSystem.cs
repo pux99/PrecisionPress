@@ -18,6 +18,10 @@ public static class LeaderboardSaveSystem
             string json = File.ReadAllText(_filePath);
             return JsonUtility.FromJson<LeaderboardData>(json);
         }
-        return new LeaderboardData();
+        
+        LeaderboardData newLeaderboard = new LeaderboardData();
+        newLeaderboard.scores.Add(new ScoreEntry("DEV", 100));
+        Save(newLeaderboard);
+        return newLeaderboard;
     }
 }
