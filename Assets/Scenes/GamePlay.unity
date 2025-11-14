@@ -611,9 +611,9 @@ MonoBehaviour:
   timer: {fileID: 2002176138}
   StartingTime: 10
   pointSystem: {fileID: 1442283125}
-  minTimerDuration: 0.5
-  speedIncreaseOnWin: 1
-  speedDecreaseOnLose: 0.5
+  minTimerDuration: 1.5
+  speedIncreaseOnWin: 0.5
+  speedDecreaseOnLose: 3
   shakeDuration: 0.5
   shakeIntensity: 5
   bgScrollSpeedIncrease: 200
