@@ -4,7 +4,7 @@ public class FormPromt : Promt
 {
     public override string ToString()
     {
-        return "SHAPE";
+        return "FORMA"; //"SHAPE";
     }
     public override bool Check(EditablePieces currentPiece, Piece selected)
     {

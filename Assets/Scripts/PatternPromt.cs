@@ -4,7 +4,7 @@ public class PatternPromt : Promt
 {
     public override string ToString()
     {
-        return "PATTERN";
+        return "PATRON"; //"PATTERN";
     }
     public override bool Check(EditablePieces currentPiece, Piece selected)
     {

@@ -30,16 +30,15 @@ public class InitialsInput : MonoBehaviour
 
         switch (context.action.name)
         {
-            case "Form1": // Q - Bajar letra
-                letterIndices[currentIndex] = (letterIndices[currentIndex] - 1 + alphabet.Length) % alphabet.Length;
-                UpdateLetters();
-                StartCoroutine(FlashArrow(downArrow, arrowPressedColor));
-                break;
-
-            case "Form2": // W - Subir letra
+            case "Form1": // Q - Subir letra
                 letterIndices[currentIndex] = (letterIndices[currentIndex] + 1) % alphabet.Length;
                 UpdateLetters();
                 StartCoroutine(FlashArrow(upArrow, arrowPressedColor));
+                break;
+            case "Form2": // W - Bajar letra
+                letterIndices[currentIndex] = (letterIndices[currentIndex] - 1 + alphabet.Length) % alphabet.Length;
+                UpdateLetters();
+                StartCoroutine(FlashArrow(downArrow, arrowPressedColor));
                 break;
 
             case "Form3": // E - Avanzar/Enviar
