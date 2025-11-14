@@ -56,7 +56,7 @@ public class PointSystem : MonoBehaviour
     private void UpdateText()
     {
         score.text = scoreValue.ToString();
-        multiplier.text = "X" + multiplierValue;
+        multiplier.text = "x" + multiplierValue;
     }
 
     public IEnumerator ShakeMultiplier()
