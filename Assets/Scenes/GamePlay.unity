@@ -578,7 +578,7 @@ MonoBehaviour:
   health: {fileID: 206751225}
   pieces:
   - form: {fileID: 21300000, guid: 31f4a64dd50e2cc4789c1d416ad1b20c, type: 3}
-    Color: {r: 1, g: 0.19607845, b: 0.19607845, a: 1}
+    Color: {r: 0.23215432, g: 1, b: 0.19607842, a: 1}
     Pattern: {fileID: 21300000, guid: ba32c25d0bc456743873d5362cfe6022, type: 3}
   - form: {fileID: 21300000, guid: f0196a587723e71409d03f464a8d7e8c, type: 3}
     Color: {r: 0.6666667, g: 0.19607845, b: 0.92549026, a: 1}
@@ -587,13 +587,13 @@ MonoBehaviour:
     Color: {r: 0.23137257, g: 0.43921572, b: 1, a: 1}
     Pattern: {fileID: 21300000, guid: 45cb0631c8d8ad243a4f3ac0b4167684, type: 3}
   - form: {fileID: 21300000, guid: 9b1021a8e888f654695d02ad5d7a44df, type: 3}
-    Color: {r: 0.23137257, g: 1, b: 0.27058825, a: 1}
+    Color: {r: 0.9811321, g: 0.1064436, b: 0.123400144, a: 1}
     Pattern: {fileID: 21300000, guid: cfd368f22764fa541a6360737f238c0b, type: 3}
   - form: {fileID: 21300000, guid: b44aaf56b36e7384ab53bfeecf8453f2, type: 3}
-    Color: {r: 1, g: 0.9607844, b: 0.37647063, a: 1}
+    Color: {r: 1, g: 0.9451168, b: 0.1273585, a: 1}
     Pattern: {fileID: 21300000, guid: 9a731e02d111dc94785eefbd556ff3ba, type: 3}
   - form: {fileID: 21300000, guid: 810cf59f3e51e004092ff18c44bf8c84, type: 3}
-    Color: {r: 1, g: 0.74273723, b: 0.37647057, a: 1}
+    Color: {r: 0.9528302, g: 0.4453212, b: 0.09438412, a: 1}
     Pattern: {fileID: 21300000, guid: 9a731e02d111dc94785eefbd556ff3ba, type: 3}
   EditablePieces:
   - Name: CenterPiece
