@@ -49,8 +49,16 @@ public class GameManager : MonoBehaviour
     private Vector2 originalFormPosition;
     private RectTransform formRectTransform;
 
+    [Header("Fade")]
+    [SerializeField] private Fade fade;
+    private bool PauseInput = true;
+    
+
     void Start()
     {
+        fade.FinishFade+=UnpauseInputs;
+        fade.FinishFade+=StartTimer;
+        fade.FadeIn();
         inputCooldown = Mathf.Max(0f, inputCooldown);
         EditablePieces firstWithForm = null;
         foreach (var e in EditablePieces)
@@ -116,7 +124,7 @@ public class GameManager : MonoBehaviour
             _currentPiece = EditablePieces[0];
         }
 
-        NextRound();
+        FirstRound();
     }
 
     public void NextRound()
@@ -137,6 +145,30 @@ public class GameManager : MonoBehaviour
         _currentPiece?.SetRandomScrollDirection();
         
         timer.StartTimer(currentTimerDuration);
+    }
+    private void FirstRound()
+    {
+        _currentPromt = promts[Random.Range(0, promts.Count)];
+        SelectAEditablePiece();
+
+        if (_currentPiece == null)
+        {
+            Debug.LogWarning("NextRound: no EditablePiece available, skipping round setup.");
+            PromtText.text = "Press ? " + _currentPromt.ToString();
+            return;
+        }
+
+        PromtText.text = _currentPromt.ToString();
+        NextPiece();
+        
+        _currentPiece?.SetRandomScrollDirection();
+        
+        
+    }
+    private void StartTimer()
+    {
+        timer.StartTimer(currentTimerDuration);
+        fade.FinishFade-=StartTimer;
     }
 
     private void SelectAEditablePiece()
@@ -312,13 +344,20 @@ public class GameManager : MonoBehaviour
     private void LossGame()
     {
         PlayerPrefs.SetInt("PlayerScore", pointSystem.scoreValue);
+        fade.FinishFade += ChangeToScoreBoard;
+        fade.FadeOut();
+    }
+
+    private void ChangeToScoreBoard()
+    {
+        fade.FinishFade -= ChangeToScoreBoard;
         SceneManager.LoadScene(scoreScene);
     }
 
     public void ButtonInput(/*int code,*/InputAction.CallbackContext context)
     {
         Debug.Log(context.action.name);
-        if (!context.performed) return;
+        if (!context.performed||PauseInput) return;
 
         if (Time.time - _lastInputTime < inputCooldown) return;
         _lastInputTime = Time.time;
@@ -344,6 +383,12 @@ public class GameManager : MonoBehaviour
                 if (pieces != null && pieces.Count > 5) CheckPromt(pieces[5]);
                 break;
         }
+    }
+
+    private void UnpauseInputs()
+    {
+        PauseInput = false;
+        fade.FinishFade-=UnpauseInputs;
     }
     private void Update()
     {

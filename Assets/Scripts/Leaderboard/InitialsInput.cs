@@ -17,11 +17,13 @@ public class InitialsInput : MonoBehaviour
     private int currentIndex = 0;
     private char[] alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".ToCharArray();
     private bool hasSubmitted = false;
+    [SerializeField] private Fade fade;
 
     void Start()
     {
         UpdateLetters();
         UpdateArrows();
+        fade.FadeIn();
     }
 
     public void ButtonInput(InputAction.CallbackContext context)
@@ -70,7 +72,7 @@ public class InitialsInput : MonoBehaviour
 
                         PlayerPrefs.DeleteKey("PlayerScore");
                     }
-
+                    
                     StartCoroutine(LoadSceneAfterDelay());
                 }
                 break;
@@ -119,6 +121,15 @@ public class InitialsInput : MonoBehaviour
     private IEnumerator LoadSceneAfterDelay()
     {
         yield return new WaitForSeconds(1f);
+        fade.FinishFade += ChangeScene;
+        fade.FadeOut();
+        
+    }
+
+    private void ChangeScene()
+    {
+        fade.FinishFade -= ChangeScene;
         SceneManager.LoadScene(menuScene);
     }
+    
 }
