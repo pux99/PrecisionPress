@@ -519,7 +519,7 @@ MonoBehaviour:
     Color: {r: 1, g: 0.9607843, b: 0.38039216, a: 1}
     Pattern: {fileID: 21300000, guid: 3741e40622cb6ec48ac5c8c88cc0d749, type: 3}
   - form: {fileID: 21300000, guid: 810cf59f3e51e004092ff18c44bf8c84, type: 3}
-    Color: {r: 1, g: 0.74509805, b: 0.3764706, a: 1}
+    Color: {r: 1, g: 0.591195, b: 0, a: 1}
     Pattern: {fileID: 21300000, guid: c5a9ce800b58f6d4fba0fa975a190c46, type: 3}
   EditablePieces:
   - Name: CenterPiece
