@@ -9,7 +9,12 @@ public class Fade : MonoBehaviour
     [SerializeField] private Image FadeImage;
     public float FadeDuration;
     public event Action FinishFade;
-    
+
+    private void Awake()
+    {
+        FadeImage.enabled = true;
+    }
+
     public void FadeIn()
     {
         StartCoroutine(Fading(1, 0));
